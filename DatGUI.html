@@ -1,0 +1,93 @@
+<html>
+	<head>	
+		<script type = "text/javascript" 
+         src = "https://cdn.rawgit.com/wheeler-microfluidics/dat.gui/0208f119dfb011080f49683991cf946419b82842/build/dat.gui.js"></script>
+		<script type = "text/javascript" src = http://cdnjs.cloudflare.com/ajax/libs/ajv/4.1.2/ajv.min.js></script>		
+	</head>
+		
+	<body>
+		
+  		<h3>DatGUI example</h3>
+
+		<script>
+var localSchema = {
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "root",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string",
+      "maxLength": 10,
+      "readonly": false
+    },
+    "speed": {
+      "type": "number",
+      "maximum": 5,
+      "minimum": -5
+    },
+    "displayOutline": {
+      "type": "boolean"
+    },
+    "explode": {
+      "type": "string",
+      "readonly": true
+    }
+  },
+};
+var ajv = new Ajv();
+
+var text = {};
+var p = localSchema.properties;
+var defaultValues = {
+  string: "undef",
+  integer: 0,
+  number: 0.1,
+  boolean: false
+};
+
+//create the default values
+for (var i in p) {
+  text[i] = defaultValues[p[i].type]
+};
+
+var gui = new dat.GUI();
+
+var menu = gui.addFolder('folder');
+
+//add to the dat.gui UI
+for (var i in p) {
+  var variable
+  variable = menu.add(text, i);
+
+  if (p[i].type == "integer" || p[i].type == "number") {
+    if (p[i].minimum != undefined)
+      variable = variable.min(p[i].minimum);
+    if (p[i].maximum != undefined)
+      variable = variable.max(p[i].maximum);
+  }
+
+  variable.onFinishChange(function(value) {
+    var row = {};
+    for(var i in menu.__controllers)
+      if(menu.__controllers[i].property != this.property)
+        row[menu.__controllers[i].property] = menu.__controllers[i].currentValue;
+      else
+        row[menu.__controllers[i].property] = value;
+        
+    // could replace row by text but if reverts to default value if validation fails/is a boolean
+    var valid = ajv.validate(localSchema, row);
+    if (!valid)
+      throw valid.errors[0].message;
+
+  });
+
+  variable.listen();
+}
+
+text.message = "dat.gui"
+
+
+</script>
+	</body>
+
+</html>
